@@ -1,6 +1,7 @@
 package link.liycxc;
 
 import com.google.gson.*;
+import link.liycxc.utils.MSTimer;
 
 import java.io.*;
 import java.nio.file.*;
@@ -24,6 +25,8 @@ public class Main {
             "webdata" + File.separator + "file" + File.separator + "history";
 
     public static void main(String[] args) {
+        MSTimer timer = new MSTimer();
+        timer.reset();
         try {
             // 监听缓存文件更改
             WatchService watchService = FileSystems.getDefault().newWatchService();
@@ -34,6 +37,11 @@ public class Main {
                 WatchKey key = watchService.take();
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if ("history".equals(event.context().toString())) {
+                        // 若5秒内重复触发则不进行
+                        if (!timer.hasTimePassed(5000L)) {
+                            break;
+                        }
+
                         // 监听到文件更改
                         String filePath = dir.resolve((Path) event.context()).toString();
                         System.out.println("Event " + System.currentTimeMillis() + " " + filePath);
@@ -51,6 +59,8 @@ public class Main {
                         } else {
                             savePlayingToFile("No playing information found.");
                         }
+
+                        timer.reset();
                     }
                 }
                 key.reset();
